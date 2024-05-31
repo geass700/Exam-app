@@ -3,6 +3,7 @@ import 'testTile.dart';
 import 'main_page.dart';
 import 'catagory.dart';
 import 'test_category_page.dart';
+
 class SelectTestCategoryPage extends StatefulWidget {
   const SelectTestCategoryPage({super.key});
 
@@ -11,7 +12,6 @@ class SelectTestCategoryPage extends StatefulWidget {
 }
 
 class _SelectTestCategoryPageState extends State<SelectTestCategoryPage> {
-
   List<Category> cats = [
     Category(
         Name: 'การบำรุงรักษารถ',
@@ -59,16 +59,27 @@ class _SelectTestCategoryPageState extends State<SelectTestCategoryPage> {
         data: 'law_commercial_and_criminal.db'
     ),
   ];
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: AppBar(leading: BackButton(onPressed:handleClickBack),title: Text('เลือกหมวดหมู่ข้อสอบที่ต้องการ'),),
-        body: ListView.builder(
-            itemCount: cats.length, itemBuilder: (context, int index) {
+      appBar: AppBar(
+        leading: BackButton(onPressed: handleClickBack),
+        title: Text('เลือกหมวดหมู่ข้อสอบที่ต้องการ'),
+        backgroundColor: Color(0xFF92CA68),
+      ),
+      body: Container(
+        color: Color(0xFF92CA68),
+        child: ListView.builder(
+            itemCount: cats.length,
+            itemBuilder: (context, int index) {
               var cat = cats[index];
               return Card(
+                color: Color(0xFFE4F3D8),
                 child: InkWell(
-                  onTap: handleClickSelect,
+                  onTap: () {
+                    handleClickSelect(cat);
+                  },
                   child: Padding(
                     padding: const EdgeInsets.all(16.0),
                     child: Column(
@@ -79,18 +90,24 @@ class _SelectTestCategoryPageState extends State<SelectTestCategoryPage> {
                   ),
                 ),
               );
-        }));
+            }
+        ),
+      ),
+    );
   }
-  void handleClickBack(){
+
+  void handleClickBack() {
     Navigator.push(
       context,
       MaterialPageRoute(builder: (context) => MainPage()),
     );
   }
-  void handleClickSelect(){
+
+  void handleClickSelect(Category category) {
+    String data = category.data;
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => Test_Category()),
+      MaterialPageRoute(builder: (context) => Test_Category(test_selected: data)),
     );
   }
 }

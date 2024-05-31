@@ -90,11 +90,7 @@ class _SelectKeyCategoryPageState extends State<SelectKeyCategoryPage> {
     );
   }
   void handleClickSelect(String databaseName){
-    Navigator.push(
 
-      context,
-      MaterialPageRoute(builder: (context) => Test_Category()),
-    );
   }
 }
 

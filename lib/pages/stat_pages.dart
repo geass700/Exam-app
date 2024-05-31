@@ -61,7 +61,10 @@ class _StatPageState extends State<StatPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: AppBar(leading: BackButton(onPressed:handleClickBack)),
+        appBar: AppBar(
+          leading: BackButton(onPressed:handleClickBack),
+          title: Text('สถิติ'),
+          backgroundColor: Color(0xFF92CA68),),
         body: ListView.builder(
             itemCount: cats.length, itemBuilder: (context, int index) {
           var cat = cats[index];
