@@ -23,13 +23,15 @@ class _Simulation_ResultPageState extends State<Simulation_ResultPage> {
   @override
   void initState() {
     super.initState();
-    _initializenextsetDatabase();
-    _initializeDonePool();
-    _calculatePool();
-    _calculateScore();
-
-    WidgetsBinding.instance.addPostFrameCallback((_) => _showScoreDialog());
+    _initializeDonePool().then((_) {
+      _initializenextsetDatabase();
+      _calculatePool();
+      _calculateScore();
+      _calculateNextSet();
+      WidgetsBinding.instance.addPostFrameCallback((_) => _showScoreDialog());
+    });
   }
+
 
   final Map<String, List<int>> nextSetQuestions = {
     'car_maintenance.db': List.filled(8, 0),
@@ -55,7 +57,7 @@ class _Simulation_ResultPageState extends State<Simulation_ResultPage> {
     'law_commercial_and_criminal.db': [],
   };
 
-  void _calculatePool() {
+  void _calculatePool() async {
     final Map<String, List<int>> thisdonepoolset = {
       'car_maintenance.db': [],
       'save_drive.db': [],
@@ -102,8 +104,8 @@ class _Simulation_ResultPageState extends State<Simulation_ResultPage> {
     print('ล่างนี้คือthisdonepoolset');
     print(thisdonepoolset);
     print('------');
-    _loadPool();
-    print('นี่คือ loadedpoolStr '+loadedpoolStr);
+    await _loadPool();
+    print('นี่คือ loadedpoolStr '+loadedpoolStr+'End loadedpoolStr---');
     Map<String, dynamic> jsonMap = jsonDecode(loadedpoolStr);
     Map<String, List<int>> oldpoolList = jsonMap.map((key, value) => MapEntry(key, List<int>.from(value)));
     print('ของเก่านะ'+ oldpoolList.toString());
@@ -115,21 +117,61 @@ class _Simulation_ResultPageState extends State<Simulation_ResultPage> {
     });
     print('ของใหม่'+mergedDonepoolList.toString());
     String mergedStr = jsonEncode(mergedDonepoolList);
-    _updatePool(mergedStr);
+    print('this is mergeStr'+mergedStr);
+    await _updatePool(mergedStr);
   }
 
+  void _calculateNextSet(){
+    final Map<String, List<int>> nextquestionset = {
+      'car_maintenance.db': [],
+      'save_drive.db': [],
+      'manners_and_conscience.db': [],
+      'warning_sign.db': [],
+      'mandatory_sign.db': [],
+      'dangerous_situations.db': [],
+      'law_land_traffic.db': [],
+      'law_automobile.db': [],
+      'law_commercial_and_criminal.db': [],
+    };
+    widget.questions.asMap().forEach((index, question) {
+      if (widget.answers[index] == question['correct_answer']) {
+        if(index >= 1 && index <= 8){
+          nextquestionset['car_maintenance.db']!.add(question['id']);
+        }
+        if(index >= 9 && index <= 22){
+          nextquestionset['save_drive.db']!.add(question['id']);
+        }
+        if(index >= 23 && index <= 29){
+          nextquestionset['manners_and_conscience.db']!.add(question['id']);
+        }
+        if(index >= 30 && index <= 33){
+          nextquestionset['warning_sign.db']!.add(question['id']);
+        }
+        if(index >= 34 && index <= 36){
+          nextquestionset['mandatory_sign.db']!.add(question['id']);
+        }
+        if(index == 37){
+          nextquestionset['dangerous_situations.db']!.add(question['id']);
+        }
+        if(index >= 38 && index <= 40){
+          nextquestionset['law_land_traffic.db']!.add(question['id']);
+        }
+        if(index >= 41 && index <= 46){
+          nextquestionset['law_automobile.db']!.add(question['id']);
+        }
+        if(index >= 47 && index <= 50){
+          nextquestionset['law_commercial_and_criminal.db']!.add(question['id']);
+        }
+      }
+    });
+  }
 
   Future<void> _initializenextsetDatabase() async {
     nextsetdatabase = await openDatabase(
       path.join(await getDatabasesPath(), 'nextSetExam.db'),
-      onCreate: (db, version) {
-        return db.execute(
-          '''
-        CREATE TABLE nextSetExam(
-          id INTEGER PRIMARY KEY AUTOINCREMENT,
-          nextsetdata TEXT
-        )
-        ''',
+      onCreate: (db, version) async {
+        await db.execute(
+          "CREATE TABLE nextsetExam(id INTEGER PRIMARY KEY AUTOINCREMENT, nextsetdata TEXT)",
         );
       },
       version: 1,
@@ -154,9 +196,7 @@ class _Simulation_ResultPageState extends State<Simulation_ResultPage> {
   }
 
 
-
-
-  void _updatePool(String newData) async {
+  Future<void> _updatePool(String newData) async {
     print('กำลังจะอัพ');
     if (donepooldatabase != null) {
       await donepooldatabase!.update(
@@ -166,26 +206,47 @@ class _Simulation_ResultPageState extends State<Simulation_ResultPage> {
         whereArgs: [1],
       );
       print('อัพเดทแล้ว');
+      printDatabaseData();
+
     }
     else{
       print('อยากอัพแต่ว่าง');
       print('นี่คือนิวดาต้า'+newData);
-      insertPool(newData);
+      //insertPool(newData);
       print('ทดลองinsertแแทนละ');
     }
+  }
+
+  void printDatabaseData() async {
+    if (donepooldatabase != null) {
+      print('เริ่มปริ้น');
+      List<Map<String, dynamic>> results = await donepooldatabase!.query('donepool');
+      if (results.isNotEmpty) {
+        print('Data in donepool database:');
+        results.forEach((row) {
+          print(row);
+        });
+      } else {
+        print('No data found in donepool');
+      }
+      print('ปริ้นเสร็จ');
+    } else {
+      print('Database is not initialized.');
+    }
+
   }
 
   Future<void> insertPool(String newData) async {
     final db = donepooldatabase;
 
-    await db?.insert(
+    await db!.insert(
       'donepool',
       {'donedata': newData},
       conflictAlgorithm: ConflictAlgorithm.replace,
     );
   }
 
-  void _loadPool() async {
+  Future<void> _loadPool() async {
     print('เริ่มโหลด');
     if (donepooldatabase != null) {
       List<Map<String, dynamic>> results = await donepooldatabase!.query('donepool');
@@ -197,6 +258,20 @@ class _Simulation_ResultPageState extends State<Simulation_ResultPage> {
 
       } else {
         print('No data found in donepool');
+        final Map<String, List<int>> emptydonepoolList = {
+          'car_maintenance.db': [],
+          'save_drive.db': [],
+          'manners_and_conscience.db': [],
+          'warning_sign.db': [],
+          'mandatory_sign.db': [],
+          'dangerous_situations.db': [],
+          'law_land_traffic.db': [],
+          'law_automobile.db': [],
+          'law_commercial_and_criminal.db': [],
+        };
+        loadedpoolStr = jsonEncode(emptydonepoolList);
+        insertPool(loadedpoolStr);
+        print('ลองเพิ่มให้ละ');
       }
     }
     else{
