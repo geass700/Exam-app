@@ -20,18 +20,18 @@ class _Simulation_ResultPageState extends State<Simulation_ResultPage> {
   Database? nextsetdatabase;
   Database? donepooldatabase;
   String loadedpoolStr = '';
+  String loadednextquestionStr ='';
   @override
   void initState() {
     super.initState();
-    _initializeDonePool().then((_) {
-      _initializenextsetDatabase();
-      _calculatePool();
-      _calculateScore();
-      _calculateNextSet();
+    _initializeDonePool().then((_) async {
+      await _initializenextsetDatabase();
+      await _calculatePool();
+      await _calculateScore();
+       _calculateNextSet();
       WidgetsBinding.instance.addPostFrameCallback((_) => _showScoreDialog());
     });
   }
-
 
   final Map<String, List<int>> nextSetQuestions = {
     'car_maintenance.db': List.filled(8, 0),
@@ -45,7 +45,7 @@ class _Simulation_ResultPageState extends State<Simulation_ResultPage> {
     'law_commercial_and_criminal.db': List.filled(4, 0),
   };
 
-  final Map<String, List<int>> donepoolList = {
+   Map<String, List<int>> donepoolList = {
     'car_maintenance.db': [],
     'save_drive.db': [],
     'manners_and_conscience.db': [],
@@ -57,7 +57,7 @@ class _Simulation_ResultPageState extends State<Simulation_ResultPage> {
     'law_commercial_and_criminal.db': [],
   };
 
-  void _calculatePool() async {
+  Future<void> _calculatePool() async {
     final Map<String, List<int>> thisdonepoolset = {
       'car_maintenance.db': [],
       'save_drive.db': [],
@@ -72,56 +72,61 @@ class _Simulation_ResultPageState extends State<Simulation_ResultPage> {
 
     widget.questions.asMap().forEach((index, question) {
       if (widget.answers[index] == question['correct_answer']) {
-        if(index >= 1 && index <= 8){
+        if (index >= 0 && index <= 7) {
           thisdonepoolset['car_maintenance.db']!.add(question['id']);
         }
-        if(index >= 9 && index <= 22){
+        if (index >= 8 && index <= 21) {
           thisdonepoolset['save_drive.db']!.add(question['id']);
         }
-        if(index >= 23 && index <= 29){
+        if (index >= 22 && index <= 28) {
           thisdonepoolset['manners_and_conscience.db']!.add(question['id']);
         }
-        if(index >= 30 && index <= 33){
+        if (index >= 29 && index <= 32) {
           thisdonepoolset['warning_sign.db']!.add(question['id']);
         }
-        if(index >= 34 && index <= 36){
+        if (index >= 33 && index <= 35) {
           thisdonepoolset['mandatory_sign.db']!.add(question['id']);
         }
-        if(index == 37){
+        if (index == 36) {
           thisdonepoolset['dangerous_situations.db']!.add(question['id']);
         }
-        if(index >= 38 && index <= 40){
+        if (index >= 37 && index <= 39) {
           thisdonepoolset['law_land_traffic.db']!.add(question['id']);
         }
-        if(index >= 41 && index <= 46){
+        if (index >= 40 && index <= 45) {
           thisdonepoolset['law_automobile.db']!.add(question['id']);
         }
-        if(index >= 47 && index <= 50){
-          thisdonepoolset['law_commercial_and_criminal.db']!.add(question['id']);
+        if (index >= 46 && index <= 50) {
+          thisdonepoolset['law_commercial_and_criminal.db']!
+              .add(question['id']);
         }
       }
     });
-    print('ล่างนี้คือthisdonepoolset');
-    print(thisdonepoolset);
-    print('------');
+    // print('ล่างนี้คือthisdonepoolset');
+    // print(thisdonepoolset);
+    // print('------');
     await _loadPool();
-    print('นี่คือ loadedpoolStr '+loadedpoolStr+'End loadedpoolStr---');
+    print('นี่คือ loadedpoolStr ' + loadedpoolStr + 'End loadedpoolStr---');
     Map<String, dynamic> jsonMap = jsonDecode(loadedpoolStr);
-    Map<String, List<int>> oldpoolList = jsonMap.map((key, value) => MapEntry(key, List<int>.from(value)));
-    print('ของเก่านะ'+ oldpoolList.toString());
+    Map<String, List<int>> oldpoolList =
+        jsonMap.map((key, value) => MapEntry(key, List<int>.from(value)));
+    // print('ของเก่านะ' + oldpoolList.toString());
 
     Map<String, List<int>> mergedDonepoolList = {};
     oldpoolList.forEach((key, value) {
-      Set<int> mergedSet = Set<int>.from(value)..addAll(thisdonepoolset[key] ?? []);
+      Set<int> mergedSet = Set<int>.from(value)
+        ..addAll(thisdonepoolset[key] ?? []);
       mergedDonepoolList[key] = mergedSet.toList();
     });
-    print('ของใหม่'+mergedDonepoolList.toString());
+    // print('ของใหม่' + mergedDonepoolList.toString());
     String mergedStr = jsonEncode(mergedDonepoolList);
-    print('this is mergeStr'+mergedStr);
+    print('this is mergeStr' + mergedStr);
     await _updatePool(mergedStr);
+    donepoolList = mergedDonepoolList;
   }
 
-  void _calculateNextSet(){
+  Future<void> _calculateNextSet() async {
+    print('เริ่มหาข้อใหม่');
     final Map<String, List<int>> nextquestionset = {
       'car_maintenance.db': [],
       'save_drive.db': [],
@@ -135,36 +140,471 @@ class _Simulation_ResultPageState extends State<Simulation_ResultPage> {
     };
     widget.questions.asMap().forEach((index, question) {
       if (widget.answers[index] == question['correct_answer']) {
-        if(index >= 1 && index <= 8){
-          nextquestionset['car_maintenance.db']!.add(question['id']);
+        if (index >= 0 && index <= 7) {
+          List<int> similarityList = json.decode(question['similarity']).cast<int>();
+          int select = -1;
+          // print(donepoolList);
+          // print('this is id: ' + question['id'].toString());
+          // print(similarityList);
+          // print('********');
+          for (int sim in similarityList) {
+            if (!donepoolList['car_maintenance.db']!.contains(sim) && !nextquestionset['car_maintenance.db']!.contains(sim)) {
+              select = sim;
+              nextquestionset['car_maintenance.db']!.add(select);
+              break;
+            }
+          }
+
+          if (select == -1) {
+            for (int sim in similarityList) {
+              if (!nextquestionset['car_maintenance.db']!.contains(sim)) {
+                select = sim;
+                nextquestionset['car_maintenance.db']!.add(select);
+                break;
+              }
+            }
+          }
+          // print('this is select:' + select.toString() + '||');
         }
-        if(index >= 9 && index <= 22){
-          nextquestionset['save_drive.db']!.add(question['id']);
+        if (index >= 8 && index <= 21) {
+
+          List<int> similarityList = json.decode(question['similarity']).cast<int>();
+          int select = -1;
+          // print(donepoolList);
+          // print('this is id: ' + question['id'].toString());
+          // print(similarityList);
+          // print('********');
+          for (int sim in similarityList) {
+
+            if (!donepoolList['save_drive.db']!.contains(sim) && !nextquestionset['save_drive.db']!.contains(sim)) {
+              select = sim;
+              nextquestionset['save_drive.db']!.add(select);
+              break;
+            }
+          }
+
+          if (select == -1) {
+            for (int sim in similarityList) {
+              if (!nextquestionset['save_drive.db']!.contains(sim)) {
+                select = sim;
+                nextquestionset['save_drive.db']!.add(select);
+                break;
+              }
+            }
+          }
+          // print('this is select:' + select.toString() + '||');
         }
-        if(index >= 23 && index <= 29){
-          nextquestionset['manners_and_conscience.db']!.add(question['id']);
+        if (index >= 22 && index <= 28) {
+
+          List<int> similarityList = json.decode(question['similarity']).cast<int>();
+          int select = -1;
+          // print(donepoolList);
+          // print('this is id: ' + question['id'].toString());
+          // print(similarityList);
+          // print('********');
+          for (int sim in similarityList) {
+
+            if (!donepoolList['manners_and_conscience.db']!.contains(sim) && !nextquestionset['manners_and_conscience.db']!.contains(sim)) {
+              select = sim;
+              nextquestionset['manners_and_conscience.db']!.add(select);
+              break;
+            }
+          }
+
+          if (select == -1) {
+            for (int sim in similarityList) {
+              if (!nextquestionset['manners_and_conscience.db']!.contains(sim)) {
+                select = sim;
+                nextquestionset['manners_and_conscience.db']!.add(select);
+                break;
+              }
+            }
+          }
+          // print('this is select:' + select.toString() + '||');
         }
-        if(index >= 30 && index <= 33){
-          nextquestionset['warning_sign.db']!.add(question['id']);
+        if (index >= 29 && index <= 32) {
+
+          List<int> similarityList = json.decode(question['similarity']).cast<int>();
+          int select = -1;
+          // print(donepoolList);
+          // print('this is id: ' + question['id'].toString());
+          // print(similarityList);
+          // print('********');
+          for (int sim in similarityList) {
+            //print(sim);
+            if (!donepoolList['warning_sign.db']!.contains(sim) && !nextquestionset['warning_sign.db']!.contains(sim)) {
+              select = sim;
+              nextquestionset['warning_sign.db']!.add(select);
+              break;
+            }
+          }
+
+          if (select == -1) {
+            for (int sim in similarityList) {
+              if (!nextquestionset['warning_sign.db']!.contains(sim)) {
+                select = sim;
+                nextquestionset['warning_sign.db']!.add(select);
+                break;
+              }
+            }
+          }
+          // print('this is select:' + select.toString() + '||');
         }
-        if(index >= 34 && index <= 36){
-          nextquestionset['mandatory_sign.db']!.add(question['id']);
+        if (index >= 33 && index <= 35) {
+
+          List<int> similarityList = json.decode(question['similarity']).cast<int>();
+          int select = -1;
+          // print(donepoolList);
+          // print('this is id: ' + question['id'].toString());
+          // print(similarityList);
+          // print('********');
+          for (int sim in similarityList) {
+            //print(sim);
+            if (!donepoolList['mandatory_sign.db']!.contains(sim) && !nextquestionset['mandatory_sign.db']!.contains(sim)) {
+              select = sim;
+              nextquestionset['mandatory_sign.db']!.add(select);
+              break;
+            }
+          }
+
+          if (select == -1) {
+            for (int sim in similarityList) {
+              if (!nextquestionset['mandatory_sign.db']!.contains(sim)) {
+                select = sim;
+                nextquestionset['mandatory_sign.db']!.add(select);
+                break;
+              }
+            }
+          }
+          // print('this is select:' + select.toString() + '||');
         }
-        if(index == 37){
-          nextquestionset['dangerous_situations.db']!.add(question['id']);
+        if (index == 36) {
+
+          List<int> similarityList = json.decode(question['similarity']).cast<int>();
+          int select = -1;
+          // print(donepoolList);
+          // print('this is id: ' + question['id'].toString());
+          // print(similarityList);
+          // print('********');
+          for (int sim in similarityList) {
+            //print(sim);
+            if (!donepoolList['dangerous_situations.db']!.contains(sim) && !nextquestionset['dangerous_situations.db']!.contains(sim)) {
+              select = sim;
+              nextquestionset['dangerous_situations.db']!.add(select);
+              break;
+            }
+          }
+
+          if (select == -1) {
+            for (int sim in similarityList) {
+              if (!nextquestionset['dangerous_situations.db']!.contains(sim)) {
+                select = sim;
+                nextquestionset['dangerous_situations.db']!.add(select);
+                break;
+              }
+            }
+          }
+          // print('this is select:' + select.toString() + '||');
         }
-        if(index >= 38 && index <= 40){
-          nextquestionset['law_land_traffic.db']!.add(question['id']);
+        if (index >= 37 && index <= 39) {
+
+          List<int> similarityList = json.decode(question['similarity']).cast<int>();
+          int select = -1;
+          // print(donepoolList);
+          // print('this is id: ' + question['id'].toString());
+          // print(similarityList);
+          // print('********');
+          for (int sim in similarityList) {
+            //print(sim);
+            if (!donepoolList['law_land_traffic.db']!.contains(sim) && !nextquestionset['law_land_traffic.db']!.contains(sim)) {
+              select = sim;
+              nextquestionset['law_land_traffic.db']!.add(select);
+              break;
+            }
+          }
+
+          if (select == -1) {
+            for (int sim in similarityList) {
+              if (!nextquestionset['law_land_traffic.db']!.contains(sim)) {
+                select = sim;
+                nextquestionset['law_land_traffic.db']!.add(select);
+                break;
+              }
+            }
+          }
+          // print('this is select:' + select.toString() + '||');
         }
-        if(index >= 41 && index <= 46){
-          nextquestionset['law_automobile.db']!.add(question['id']);
+        if (index >= 40 && index <= 45) {
+
+          List<int> similarityList = json.decode(question['similarity']).cast<int>();
+          int select = -1;
+          // print(donepoolList);
+          // print('this is id: ' + question['id'].toString());
+          // print(similarityList);
+          // print('********');
+          for (int sim in similarityList) {
+           // print(sim);
+            if (!donepoolList['law_automobile.db']!.contains(sim) && !nextquestionset['law_automobile.db']!.contains(sim)) {
+              select = sim;
+              nextquestionset['law_automobile.db']!.add(select);
+              break;
+            }
+          }
+
+          if (select == -1) {
+            for (int sim in similarityList) {
+              if (!nextquestionset['law_automobile.db']!.contains(sim)) {
+                select = sim;
+                nextquestionset['law_automobile.db']!.add(select);
+                break;
+              }
+            }
+          }
+          // print('this is select:' + select.toString() + '||');
         }
-        if(index >= 47 && index <= 50){
-          nextquestionset['law_commercial_and_criminal.db']!.add(question['id']);
+        if (index >= 46 && index <= 50) {
+
+          List<int> similarityList = json.decode(question['similarity']).cast<int>();
+          int select = -1;
+          // print(donepoolList);
+          // print('this is id: ' + question['id'].toString());
+          // print(similarityList);
+          // print('********');
+          for (int sim in similarityList) {
+            //print(sim);
+            if (!donepoolList['law_commercial_and_criminal.db']!.contains(sim) && !nextquestionset['law_commercial_and_criminal.db']!.contains(sim)) {
+              select = sim;
+              nextquestionset['law_commercial_and_criminal.db']!.add(select);
+              break;
+            }
+          }
+
+          if (select == -1) {
+            for (int sim in similarityList) {
+              if (!nextquestionset['law_commercial_and_criminal.db']!.contains(sim)) {
+                select = sim;
+                nextquestionset['law_commercial_and_criminal.db']!.add(select);
+                break;
+              }
+            }
+          }
+          // print('this is select:' + select.toString() + '||');
+        }
+      } else {
+        if (index >= 0 && index <= 7) {
+          List<int> similarityList = json.decode(question['similarity']).cast<int>();
+          int select = -1;
+          for (int i = similarityList.length - 1; i >= 0; i--) {
+            int sim = similarityList[i];
+            if (!donepoolList['car_maintenance.db']!.contains(sim) && !nextquestionset['car_maintenance.db']!.contains(sim)) {
+              select = sim;
+              nextquestionset['car_maintenance.db']!.add(select);
+              break;
+            }
+          }
+
+          if (select == -1 && similarityList.isNotEmpty) {
+            for (int i = similarityList.length - 1; i >= 0; i--) {
+              int sim = similarityList[i];
+              if (!nextquestionset['car_maintenance.db']!.contains(sim)) {
+                select = sim;
+                nextquestionset['car_maintenance.db']!.add(select);
+                break;
+              }
+            }
+          }
+        }
+        if (index >= 8 && index <= 21) {
+          List<int> similarityList = json.decode(question['similarity']).cast<int>();
+          int select = -1;
+          for (int i = similarityList.length - 1; i >= 0; i--) {
+            int sim = similarityList[i];
+            if (!donepoolList['save_drive.db']!.contains(sim) && !nextquestionset['save_drive.db']!.contains(sim)) {
+              select = sim;
+              nextquestionset['save_drive.db']!.add(select);
+              break;
+            }
+          }
+
+          if (select == -1 && similarityList.isNotEmpty) {
+            for (int i = similarityList.length - 1; i >= 0; i--) {
+              int sim = similarityList[i];
+              if (!nextquestionset['save_drive.db']!.contains(sim)) {
+                select = sim;
+                nextquestionset['save_drive.db']!.add(select);
+                break;
+              }
+            }
+          }
+        }
+        if (index >= 22 && index <= 28) {
+          List<int> similarityList = json.decode(question['similarity']).cast<int>();
+          int select = -1;
+          for (int i = similarityList.length - 1; i >= 0; i--) {
+            int sim = similarityList[i];
+            if (!donepoolList['manners_and_conscience.db']!.contains(sim) && !nextquestionset['manners_and_conscience.db']!.contains(sim)) {
+              select = sim;
+              nextquestionset['manners_and_conscience.db']!.add(select);
+              break;
+            }
+          }
+
+          if (select == -1 && similarityList.isNotEmpty) {
+            for (int i = similarityList.length - 1; i >= 0; i--) {
+              int sim = similarityList[i];
+              if (!nextquestionset['manners_and_conscience.db']!.contains(sim)) {
+                select = sim;
+                nextquestionset['manners_and_conscience.db']!.add(select);
+                break;
+              }
+            }
+          }
+        }
+        if (index >= 29 && index <= 32) {
+          List<int> similarityList = json.decode(question['similarity']).cast<int>();
+          int select = -1;
+          for (int i = similarityList.length - 1; i >= 0; i--) {
+            int sim = similarityList[i];
+            if (!donepoolList['warning_sign.db']!.contains(sim) && !nextquestionset['warning_sign.db']!.contains(sim)) {
+              select = sim;
+              nextquestionset['warning_sign.db']!.add(select);
+              break;
+            }
+          }
+
+          if (select == -1 && similarityList.isNotEmpty) {
+            for (int i = similarityList.length - 1; i >= 0; i--) {
+              int sim = similarityList[i];
+              if (!nextquestionset['warning_sign.db']!.contains(sim)) {
+                select = sim;
+                nextquestionset['warning_sign.db']!.add(select);
+                break;
+              }
+            }
+          }
+        }
+        if (index >= 33 && index <= 35) {
+          List<int> similarityList = json.decode(question['similarity']).cast<int>();
+          int select = -1;
+          for (int i = similarityList.length - 1; i >= 0; i--) {
+            int sim = similarityList[i];
+            if (!donepoolList['mandatory_sign.db']!.contains(sim) && !nextquestionset['mandatory_sign.db']!.contains(sim)) {
+              select = sim;
+              nextquestionset['mandatory_sign.db']!.add(select);
+              break;
+            }
+          }
+
+          if (select == -1 && similarityList.isNotEmpty) {
+            for (int i = similarityList.length - 1; i >= 0; i--) {
+              int sim = similarityList[i];
+              if (!nextquestionset['mandatory_sign.db']!.contains(sim)) {
+                select = sim;
+                nextquestionset['mandatory_sign.db']!.add(select);
+                break;
+              }
+            }
+          }
+        }
+        if (index == 36) {
+          List<int> similarityList = json.decode(question['similarity']).cast<int>();
+          int select = -1;
+          for (int i = similarityList.length - 1; i >= 0; i--) {
+            int sim = similarityList[i];
+            if (!donepoolList['dangerous_situations.db']!.contains(sim) && !nextquestionset['dangerous_situations.db']!.contains(sim)) {
+              select = sim;
+              nextquestionset['dangerous_situations.db']!.add(select);
+              break;
+            }
+          }
+
+          if (select == -1 && similarityList.isNotEmpty) {
+            for (int i = similarityList.length - 1; i >= 0; i--) {
+              int sim = similarityList[i];
+              if (!nextquestionset['dangerous_situations.db']!.contains(sim)) {
+                select = sim;
+                nextquestionset['dangerous_situations.db']!.add(select);
+                break;
+              }
+            }
+          }
+        }
+        if (index >= 37 && index <= 39) {
+          List<int> similarityList = json.decode(question['similarity']).cast<int>();
+          int select = -1;
+          for (int i = similarityList.length - 1; i >= 0; i--) {
+            int sim = similarityList[i];
+            if (!donepoolList['law_land_traffic.db']!.contains(sim) && !nextquestionset['law_land_traffic.db']!.contains(sim)) {
+              select = sim;
+              nextquestionset['law_land_traffic.db']!.add(select);
+              break;
+            }
+          }
+
+          if (select == -1 && similarityList.isNotEmpty) {
+            for (int i = similarityList.length - 1; i >= 0; i--) {
+              int sim = similarityList[i];
+              if (!nextquestionset['law_land_traffic.db']!.contains(sim)) {
+                select = sim;
+                nextquestionset['law_land_traffic.db']!.add(select);
+                break;
+              }
+            }
+          }
+        }
+        if (index >= 40 && index <= 45) {
+          List<int> similarityList = json.decode(question['similarity']).cast<int>();
+          int select = -1;
+          for (int i = similarityList.length - 1; i >= 0; i--) {
+            int sim = similarityList[i];
+            if (!donepoolList['law_automobile.db']!.contains(sim) && !nextquestionset['law_automobile.db']!.contains(sim)) {
+              select = sim;
+              nextquestionset['law_automobile.db']!.add(select);
+              break;
+            }
+          }
+
+          if (select == -1 && similarityList.isNotEmpty) {
+            for (int i = similarityList.length - 1; i >= 0; i--) {
+              int sim = similarityList[i];
+              if (!nextquestionset['law_automobile.db']!.contains(sim)) {
+                select = sim;
+                nextquestionset['law_automobile.db']!.add(select);
+                break;
+              }
+            }
+          }
+        }
+        if (index >= 46 && index <= 50) {
+          List<int> similarityList = json.decode(question['similarity']).cast<int>();
+          int select = -1;
+          for (int i = similarityList.length - 1; i >= 0; i--) {
+            int sim = similarityList[i];
+            if (!donepoolList['law_commercial_and_criminal.db']!.contains(sim) && !nextquestionset['law_commercial_and_criminal.db']!.contains(sim)) {
+              select = sim;
+              nextquestionset['law_commercial_and_criminal.db']!.add(select);
+              break;
+            }
+          }
+
+          if (select == -1 && similarityList.isNotEmpty) {
+            for (int i = similarityList.length - 1; i >= 0; i--) {
+              int sim = similarityList[i];
+              if (!nextquestionset['law_commercial_and_criminal.db']!.contains(sim)) {
+                select = sim;
+                nextquestionset['law_commercial_and_criminal.db']!.add(select);
+                break;
+              }
+            }
+          }
         }
       }
     });
+    print(nextquestionset);
+    String nextquestionStr = jsonEncode(nextquestionset);
+    _updatenextsetdatabase(nextquestionStr);
   }
+
 
   Future<void> _initializenextsetDatabase() async {
     nextsetdatabase = await openDatabase(
@@ -176,6 +616,13 @@ class _Simulation_ResultPageState extends State<Simulation_ResultPage> {
       },
       version: 1,
     );
+    if (nextsetdatabase != null) {
+      List<Map<String, dynamic>> results = await nextsetdatabase!
+          .query('sqlite_master', where: 'type = ?', whereArgs: ['table']);
+      print(
+          'จาก initializenextsetDatabase นี่คือ Data in nextsetdata database: $results');
+    }
+
   }
 
   Future<void> _initializeDonePool() async {
@@ -190,11 +637,12 @@ class _Simulation_ResultPageState extends State<Simulation_ResultPage> {
     );
 
     if (donepooldatabase != null) {
-      List<Map<String, dynamic>> results = await donepooldatabase!.query('sqlite_master', where: 'type = ?', whereArgs: ['table']);
-      print('จาก initializeDonePool นี่คือ Data in donepool database: $results');
+      List<Map<String, dynamic>> results = await donepooldatabase!
+          .query('sqlite_master', where: 'type = ?', whereArgs: ['table']);
+      print(
+          'จาก initializeDonePool นี่คือ Data in donepool database: $results');
     }
   }
-
 
   Future<void> _updatePool(String newData) async {
     print('กำลังจะอัพ');
@@ -206,12 +654,10 @@ class _Simulation_ResultPageState extends State<Simulation_ResultPage> {
         whereArgs: [1],
       );
       print('อัพเดทแล้ว');
-      printDatabaseData();
-
-    }
-    else{
+      //printDatabaseData();
+    } else {
       print('อยากอัพแต่ว่าง');
-      print('นี่คือนิวดาต้า'+newData);
+      print('นี่คือนิวดาต้า' + newData);
       //insertPool(newData);
       print('ทดลองinsertแแทนละ');
     }
@@ -220,7 +666,8 @@ class _Simulation_ResultPageState extends State<Simulation_ResultPage> {
   void printDatabaseData() async {
     if (donepooldatabase != null) {
       print('เริ่มปริ้น');
-      List<Map<String, dynamic>> results = await donepooldatabase!.query('donepool');
+      List<Map<String, dynamic>> results =
+          await donepooldatabase!.query('donepool');
       if (results.isNotEmpty) {
         print('Data in donepool database:');
         results.forEach((row) {
@@ -233,7 +680,6 @@ class _Simulation_ResultPageState extends State<Simulation_ResultPage> {
     } else {
       print('Database is not initialized.');
     }
-
   }
 
   Future<void> insertPool(String newData) async {
@@ -249,13 +695,13 @@ class _Simulation_ResultPageState extends State<Simulation_ResultPage> {
   Future<void> _loadPool() async {
     print('เริ่มโหลด');
     if (donepooldatabase != null) {
-      List<Map<String, dynamic>> results = await donepooldatabase!.query('donepool');
+      List<Map<String, dynamic>> results =
+          await donepooldatabase!.query('donepool');
       print('ล่างนี้รีเซ้า');
       print(results);
       if (results.isNotEmpty) {
         loadedpoolStr = results.first['donedata'];
         print('Loaded data from donepool: $results');
-
       } else {
         print('No data found in donepool');
         final Map<String, List<int>> emptydonepoolList = {
@@ -273,8 +719,7 @@ class _Simulation_ResultPageState extends State<Simulation_ResultPage> {
         insertPool(loadedpoolStr);
         print('ลองเพิ่มให้ละ');
       }
-    }
-    else{
+    } else {
       final Map<String, List<int>> emptydonepoolList = {
         'car_maintenance.db': [],
         'save_drive.db': [],
@@ -290,32 +735,47 @@ class _Simulation_ResultPageState extends State<Simulation_ResultPage> {
       insertPool(loadedpoolStr);
       print('ว่างแต่ลองเพิ่มให้ละ');
     }
-
   }
 
-  void _updatenextsetdatabase(String newData)async{
-    if (nextsetdatabase!= null) {
-      await nextsetdatabase!.insert('nextSetExam', {'nextsetdata': newData}, conflictAlgorithm: ConflictAlgorithm.replace);
-  }
-  }
-  void _loaddatabase() async{
-    if (nextsetdatabase!= null) {
-      List<Map<String, dynamic>> results = await nextsetdatabase!.query('nextSetExam');
-      print('Loaded data from nextSetExam: $results');
+  void _updatenextsetdatabase(String newData) async {
+    print('กำลังจะอัพnextset');
+    if (nextsetdatabase != null) {
+      await nextsetdatabase!.update(
+        'nextsetExam',
+        {'nextsetdata': newData},
+        where: 'id = ?',
+        whereArgs: [1],
+      );
+      print('อัพเดทnextsetแล้ว');
+      //printDatabaseData();
+    } else {
+      print('อยากอัพnextsetแต่ว่าง');
+      print('นี่คือนิวดาต้าnextset' + newData);
+
     }
   }
-  void _calculateScore() {
+
+  void _loaddatabase() async {
+    if (nextsetdatabase != null) {
+      List<Map<String, dynamic>> results =
+          await nextsetdatabase!.query('nextSetExam');
+      print('Loaded data from nextSetExam: $results');
+      if (results.isNotEmpty) {
+        loadednextquestionStr = results.first['nextSetExam'];
+        print('Loaded data from nextSetExam: $results');
+      }
+    }
+  }
+
+  Future<void> _calculateScore() async {
     score = 0;
 
     widget.questions.asMap().forEach((index, question) {
-      //print(question['similarity']);
       if (widget.answers[index] == question['correct_answer']) {
         score++;
-
       }
     });
   }
-
 
   void _showScoreDialog() {
     showDialog(
@@ -348,10 +808,7 @@ class _Simulation_ResultPageState extends State<Simulation_ResultPage> {
             onPressed: handleClickHome,
             icon: Icon(Icons.home),
           ),
-          IconButton(
-            icon: Icon(Icons.print),
-            onPressed: (){}
-          ),
+          IconButton(icon: Icon(Icons.print), onPressed: () {}),
         ],
       ),
       body: ListView.builder(
@@ -360,7 +817,8 @@ class _Simulation_ResultPageState extends State<Simulation_ResultPage> {
           final question = widget.questions[index];
           final correctAnswer = question['correct_answer'] ?? '';
           final userAnswer = widget.answers[index] ?? '';
-          final questionId = question['id'] ?? 'N/A'; // Change 'question_id' to 'id'
+          final questionId =
+              question['id'] ?? 'N/A'; // Change 'question_id' to 'id'
 
           return Card(
             margin: EdgeInsets.symmetric(vertical: 8, horizontal: 16),
@@ -384,14 +842,15 @@ class _Simulation_ResultPageState extends State<Simulation_ResultPage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: List.generate(
                       4,
-                          (i) {
+                      (i) {
                         String option = question['choice_${i + 1}'] ?? '';
                         bool isCorrect = option == correctAnswer;
                         return RadioListTile<String>(
                           title: Row(
                             children: [
                               Expanded(child: Text(option)),
-                              if (isCorrect) Icon(Icons.check, color: Colors.green),
+                              if (isCorrect)
+                                Icon(Icons.check, color: Colors.green),
                             ],
                           ),
                           value: option,
