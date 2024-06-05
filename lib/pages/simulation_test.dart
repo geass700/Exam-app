@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../database_helper.dart';
 import 'selcet_tset_result_page.dart';
+import 'simulation_result_page.dart';
 
 class SimulationTest extends StatefulWidget {
   @override
@@ -16,29 +17,14 @@ class _SimulationTestState extends State<SimulationTest> {
 
   final Map<String, List<int>> databaseQuestions = {
     'car_maintenance.db': [1, 120, 106, 44, 10, 72, 57, 83],
-    'save_drive.db': [
-      1,
-      86,
-      203,
-      160,
-      4,
-      134,
-      205,
-      184,
-      1775,
-      49,
-      120,
-      43,
-      89,
-      140
-    ],
+    'save_drive.db': [1, 86, 203, 160, 4, 134, 205, 184, 175, 49, 120, 43, 89, 140],
     'manners_and_conscience.db': [1, 30, 103, 60, 19, 85, 2],
     'warning_sign.db': [1, 11, 9, 40],
     'mandatory_sign.db': [1, 33, 24],
     'dangerous_situations.db': [1],
     'law_land_traffic.db': [1, 46, 50],
     'law_automobile.db': [1, 10, 8, 60, 36, 65],
-    'law_commercial_and_criminal.db': [1, 8, 24, 40, 62]
+    'law_commercial_and_criminal.db': [1, 8, 24, 40]
   };
 
   @override
@@ -83,7 +69,7 @@ class _SimulationTestState extends State<SimulationTest> {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => Select_ResultPage(
+        builder: (context) => Simulation_ResultPage(
           answers: answers,
           questions: questions,
         ),
