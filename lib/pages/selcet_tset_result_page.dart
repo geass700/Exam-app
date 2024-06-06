@@ -57,27 +57,6 @@ class _Select_ResultPageState extends State<Select_ResultPage> {
     }
   }
 
-  Future<void> _printStoredCorrectAnswers() async {
-    final prefs = await SharedPreferences.getInstance();
-    List<String> databaseNames = [
-      'car_maintenance.db',
-      'save_drive.db',
-      'manners_and_conscience.db',
-      'warning_sign.db',
-      'mandatory_sign.db',
-      'dangerous_situations.db',
-      'law_land_traffic.db',
-      'law_automobile.db',
-      'law_commercial_and_criminal.db'
-    ];
-
-    for (String dbName in databaseNames) {
-      String key = 'correct_answers_$dbName';
-      List<String> correctAnswers = prefs.getStringList(key) ?? [];
-      print('Correct answers for $dbName: $correctAnswers');
-    }
-  }
-
   void _showScoreDialog() {
     showDialog(
       context: context,
@@ -108,10 +87,6 @@ class _Select_ResultPageState extends State<Select_ResultPage> {
           IconButton(
             onPressed: handleClickHome,
             icon: Icon(Icons.home),
-          ),
-          IconButton(
-            icon: Icon(Icons.print),
-            onPressed: _printStoredCorrectAnswers,
           ),
         ],
       ),

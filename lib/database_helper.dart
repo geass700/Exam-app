@@ -84,6 +84,15 @@ class DatabaseHelper {
     return result.isNotEmpty;
   }
 
+  Future<Database> _openDatabase(String dbName) async {
+    final dbPath = await getDatabasesPath();
+    return openDatabase(join(dbPath, dbName));
+  }
+
+  Future<List<Map<String, dynamic>>> getAllQuestions(String dbName) async {
+    final db = await _openDatabase(dbName);
+    return db.query('questions');
+  }
   Future<void> insertQuizHistory(int categoryId, int questionId, String selectedOption, int score) async {
     Database db = await getDatabase('results.db');
     await db.insert(

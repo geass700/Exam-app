@@ -658,23 +658,23 @@ class _Simulation_ResultPageState extends State<Simulation_ResultPage> {
     } else {
       print('อยากอัพแต่ว่าง');
       print('นี่คือนิวดาต้า' + newData);
-      //insertPool(newData);
+      insertPool(newData);
       print('ทดลองinsertแแทนละ');
     }
   }
 
   void printDatabaseData() async {
-    if (donepooldatabase != null) {
+    if (nextsetdatabase != null) {
       print('เริ่มปริ้น');
       List<Map<String, dynamic>> results =
-          await donepooldatabase!.query('donepool');
+          await nextsetdatabase!.query('nextsetExam');
       if (results.isNotEmpty) {
-        print('Data in donepool database:');
+        print('Data in nextsetExam database:');
         results.forEach((row) {
           print(row);
         });
       } else {
-        print('No data found in donepool');
+        print('No data found in nextsetExam');
       }
       print('ปริ้นเสร็จ');
     } else {
@@ -688,6 +688,16 @@ class _Simulation_ResultPageState extends State<Simulation_ResultPage> {
     await db!.insert(
       'donepool',
       {'donedata': newData},
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }
+
+  Future<void> insertNext(String newData) async {
+    final db = nextsetdatabase;
+
+    await db!.insert(
+      'nextsetExam',
+      {'nextsetdata': newData},
       conflictAlgorithm: ConflictAlgorithm.replace,
     );
   }
@@ -739,21 +749,38 @@ class _Simulation_ResultPageState extends State<Simulation_ResultPage> {
 
   void _updatenextsetdatabase(String newData) async {
     print('กำลังจะอัพnextset');
+    print('นี่คือนิวดาต้าnextset: $newData');
+
     if (nextsetdatabase != null) {
-      await nextsetdatabase!.update(
+      // ตรวจสอบว่ามีข้อมูลในตารางหรือไม่
+      List<Map<String, dynamic>> result = await nextsetdatabase!.query('nextSetExam');
+      print('ข้อมูลใน nextsetExam ก่อนการอัพเดท: $result');
+      await nextsetdatabase!.insert(
         'nextsetExam',
+        {'id': 1, 'nextsetdata': newData},
+        conflictAlgorithm: ConflictAlgorithm.replace,
+      );
+      print('Inserted initial data into nextsetExam');
+
+      await nextsetdatabase!.update(
+        'nextSetExam',
         {'nextsetdata': newData},
         where: 'id = ?',
         whereArgs: [1],
       );
       print('อัพเดทnextsetแล้ว');
-      //printDatabaseData();
+
+      // ตรวจสอบข้อมูลหลังการอัพเดท
+      result = await nextsetdatabase!.query('nextSetExam');
+      print('ข้อมูลใน nextsetExam หลังการอัพเดท: $result');
     } else {
       print('อยากอัพnextsetแต่ว่าง');
-      print('นี่คือนิวดาต้าnextset' + newData);
 
+      insertNext(newData);
     }
+    printDatabaseData();
   }
+
 
   void _loaddatabase() async {
     if (nextsetdatabase != null) {

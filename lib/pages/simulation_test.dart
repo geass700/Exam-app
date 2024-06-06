@@ -1,9 +1,12 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:sqflite/sqflite.dart';
 import '../database_helper.dart';
 import 'selcet_tset_result_page.dart';
 import 'simulation_result_page.dart';
+import 'package:path/path.dart' as path;
+import 'dart:io';
 
 class SimulationTest extends StatefulWidget {
   @override
@@ -14,8 +17,10 @@ class _SimulationTestState extends State<SimulationTest> {
   final dbHelper = DatabaseHelper();
   List<Map<String, dynamic>> questions = [];
   final Map<int, String> answers = {};
+  Database? nextquestion;
+  String loadednextquestionStr ='';
 
-  final Map<String, List<int>> databaseQuestions = {
+  Map<String, List<int>> databaseQuestions = {
     'car_maintenance.db': [1, 120, 106, 44, 10, 72, 57, 83],
     'save_drive.db': [1, 86, 203, 160, 4, 134, 205, 184, 175, 49, 120, 43, 89, 140],
     'manners_and_conscience.db': [1, 30, 103, 60, 19, 85, 2],
@@ -30,10 +35,34 @@ class _SimulationTestState extends State<SimulationTest> {
   @override
   void initState() {
     super.initState();
+    _openDatabase();
     _loadQuestions();
   }
 
+  Future<void> _openDatabase() async {
+    final dbPath = await getDatabasesPath();
+    final dbPathWithName = path.join(dbPath, 'nextSetExam.db');
+
+    nextquestion = await openDatabase(
+      dbPathWithName,
+      version: 1,
+    );
+    _loadQuestions();
+  }
+
+
   void _loadQuestions() async {
+    if(nextquestion != null){
+      print('nextquestion มีค่า');
+      print('nextquestion details: $nextquestion');
+      final List<Map<String, dynamic>> result = await nextquestion!.query('nextSetExam');
+      print('ข้อมูลจาก nextSetExam: $result');
+      Map<String, dynamic> data = json.decode(result.first['nextsetdata']);
+      print('หลัง encode: $data');
+      data.forEach((key, value) {
+        databaseQuestions[key] = List<int>.from(value);
+      });
+    }
     List<Map<String, dynamic>> allQuestions = [];
     for (String dbName in databaseQuestions.keys) {
       var questionIds = databaseQuestions[dbName]!;
@@ -46,24 +75,6 @@ class _SimulationTestState extends State<SimulationTest> {
     });
   }
 
-  Future<void> _saveCorrectAnswer(String dbName, int questionId) async {
-    final prefs = await SharedPreferences.getInstance();
-    String key = 'correct_answers_$dbName';
-    List<String> correctAnswers = prefs.getStringList(key) ?? [];
-
-    if (!correctAnswers.contains(questionId.toString())) {
-      correctAnswers.add(questionId.toString());
-    }
-
-    await prefs.setStringList(key, correctAnswers);
-  }
-
-  Future<List<int>> _loadCorrectAnswers(String dbName) async {
-    final prefs = await SharedPreferences.getInstance();
-    String key = 'correct_answers_$dbName';
-    List<String> correctAnswers = prefs.getStringList(key) ?? [];
-    return correctAnswers.map((id) => int.parse(id)).toList();
-  }
 
   void _submitAnswers() async {
     Navigator.push(
@@ -75,30 +86,8 @@ class _SimulationTestState extends State<SimulationTest> {
         ),
       ),
     );
-    // print("Submitted Answers: $answers");
-    // for (var question in questions) {
-    //   final int questionId = question['question_id'];
-    //   final String dbName = question['database_name'];
-    //   final String correctAnswer = question['correct_answer'];
-    //
-    //   if (questionId != null && dbName != null && correctAnswer != null) {
-    //     if (answers.containsKey(questionId) &&
-    //         answers[questionId] == correctAnswer) {
-    //       await _saveCorrectAnswer(dbName, questionId); // Correct answer
-    //     }
-    //   } else {
-    //     print(
-    //         "Error: questionId, dbName, or correctAnswer is null for question: $question");
-    //   }
-    // }
   }
 
-  Future<void> _printStoredCorrectAnswers() async {
-    for (String dbName in databaseQuestions.keys) {
-      List<int> correctAnswers = await _loadCorrectAnswers(dbName);
-      print('Correct answers for $dbName: $correctAnswers');
-    }
-  }
 
   void _demoSelectAnswers() {
     setState(() {
@@ -118,10 +107,6 @@ class _SimulationTestState extends State<SimulationTest> {
           IconButton(
             icon: Icon(Icons.play_arrow),
             onPressed: _demoSelectAnswers,
-          ),
-          IconButton(
-            icon: Icon(Icons.print),
-            onPressed: _printStoredCorrectAnswers,
           ),
         ],
       ),
