@@ -3,10 +3,6 @@ import 'package:sqflite/sqflite.dart';
 import 'main_page.dart';
 import 'lib/database_helper.dart';
 
-void main() {
-  runApp(KeyTile());
-}
-
 class KeyTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
@@ -104,6 +100,24 @@ class _HomePageState extends State<HomePage> {
                 itemCount: questions.length,
                 itemBuilder: (context, index) {
                   final question = questions[index];
+                  String? imagePath;
+
+                  // Check if 'image_number' is not null and set the image path
+                  if (question['image_number'] != null) {
+                    String imageNumber = question['image_number'];
+                    String jpgPath = 'assets/testpic/$imageNumber.jpg';
+                    String pngPath = 'assets/testpic/$imageNumber.png';
+
+                    // Check if the JPG image exists
+                    if (AssetImage(jpgPath).assetName.isNotEmpty) {
+                      imagePath = jpgPath;
+                    }
+                    // Check if the PNG image exists
+                    else if (AssetImage(pngPath).assetName.isNotEmpty) {
+                      imagePath = pngPath;
+                    }
+                  }
+
                   return Card(
                     margin: EdgeInsets.symmetric(vertical: 8, horizontal: 16),
                     color: Color(0xFFE4F3D8), // กำหนดสีพื้นหลังให้กับ Card
@@ -119,6 +133,8 @@ class _HomePageState extends State<HomePage> {
                               fontWeight: FontWeight.bold,
                             ),
                           ),
+                          if (imagePath != null) // Display the image if it exists
+                            Image.asset(imagePath),
                           SizedBox(height: 8),
                           Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -156,6 +172,12 @@ class _HomePageState extends State<HomePage> {
                               fontStyle: FontStyle.italic,
                             ),
                           ),
+                          Text(
+                            'image: ${question['image_number']}',
+                            style: TextStyle(
+                              fontStyle: FontStyle.italic,
+                            ),
+                          ),
                         ],
                       ),
                     ),
@@ -168,6 +190,7 @@ class _HomePageState extends State<HomePage> {
       ),
     );
   }
+
   void handleClickBack() {
     Navigator.push(
       context,

@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:sqflite/sqlite_api.dart';
 import 'main_page.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart' as path;
@@ -19,16 +20,23 @@ class _Simulation_ResultPageState extends State<Simulation_ResultPage> {
   int score = 0;
   Database? nextsetdatabase;
   Database? donepooldatabase;
+  Database? scoreListdatabase;
   String loadedpoolStr = '';
   String loadednextquestionStr ='';
+  String loadedScoreStr ='';
+
   @override
   void initState() {
     super.initState();
     _initializeDonePool().then((_) async {
       await _initializenextsetDatabase();
+      await _initializeScoreList();
       await _calculatePool();
-      await _calculateScore();
-       _calculateNextSet();
+      _calculateScore();
+      _calculateNextSet();
+
+
+
       WidgetsBinding.instance.addPostFrameCallback((_) => _showScoreDialog());
     });
   }
@@ -43,6 +51,18 @@ class _Simulation_ResultPageState extends State<Simulation_ResultPage> {
     'law_land_traffic.db': List.filled(3, 0),
     'law_automobile.db': List.filled(6, 0),
     'law_commercial_and_criminal.db': List.filled(4, 0),
+  };
+
+  Map<String, List<int>> scoreList = {
+    'car_maintenance.db': [0,0],
+    'save_drive.db': [0,0],
+    'manners_and_conscience.db': [0,0],
+    'warning_sign.db': [0,0],
+    'mandatory_sign.db': [0,0],
+    'dangerous_situations.db': [0,0],
+    'law_land_traffic.db': [0,0],
+    'law_automobile.db': [0,0],
+    'law_commercial_and_criminal.db': [0,0],
   };
 
    Map<String, List<int>> donepoolList = {
@@ -622,7 +642,24 @@ class _Simulation_ResultPageState extends State<Simulation_ResultPage> {
       print(
           'จาก initializenextsetDatabase นี่คือ Data in nextsetdata database: $results');
     }
+  }
 
+  Future<void> _initializeScoreList() async {
+    scoreListdatabase = await openDatabase(
+      path.join(await getDatabasesPath(), 'scoreList.db'),
+      onCreate: (db, version) async {
+        await db.execute(
+          "CREATE TABLE scorelist(id INTEGER PRIMARY KEY AUTOINCREMENT, scoredata TEXT)",
+        );
+      },
+      version: 1,
+    );
+    if (scoreListdatabase != null) {
+      List<Map<String, dynamic>> results = await scoreListdatabase!
+          .query('sqlite_master', where: 'type = ?', whereArgs: ['table']);
+      print(
+          'จาก _initializeScoreList Database นี่คือ Data in scoredata database: $results');
+    }
   }
 
   Future<void> _initializeDonePool() async {
@@ -641,6 +678,25 @@ class _Simulation_ResultPageState extends State<Simulation_ResultPage> {
           .query('sqlite_master', where: 'type = ?', whereArgs: ['table']);
       print(
           'จาก initializeDonePool นี่คือ Data in donepool database: $results');
+    }
+  }
+
+  Future<void> _updateScore(String newData) async {
+    print('กำลังจะอัพScore');
+    if (scoreListdatabase != null) {
+      await scoreListdatabase!.update(
+        'scorelist',
+        {'scoredata': newData},
+        where: 'id = ?',
+        whereArgs: [1],
+      );
+      print('อัพเดทสกอแล้ว');
+      //printDatabaseData();
+    } else {
+      print('อยากอัพ Score แต่ว่าง');
+      print('นี่คือนิวดาต้า Score' + newData);
+      insertScore(newData);
+      print('ทดลองinsertแแทนละ');
     }
   }
 
@@ -702,11 +758,54 @@ class _Simulation_ResultPageState extends State<Simulation_ResultPage> {
     );
   }
 
+  Future<void> insertScore(String newData) async {
+    final db = scoreListdatabase;
+
+    await db!.insert(
+      'scorelist',
+      {'id': 1,'scoredata': newData},
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }
+
+  Future<void> _loadScore() async {
+    print('เริ่มโหลดScore');
+    if (scoreListdatabase != null) {
+      List<Map<String, dynamic>> results = await scoreListdatabase!.query('scorelist');
+      print('ล่างนี้รีเซ้าScore');
+      print(results);
+      if (results.isNotEmpty) {
+        loadedScoreStr = results.first['scoredata'];
+        print('Loaded data from scorelist: $results');
+
+        if (loadedScoreStr.isNotEmpty) {
+          // Decode the JSON string to a Map
+          Map<String, dynamic> decodedData = jsonDecode(loadedScoreStr);
+          print('Decoded scoredata: $decodedData');
+        } else {
+          print('Scoredata is empty');
+          String strjson = jsonEncode(scoreList);
+          insertScore(jsonEncode(scoreList));
+          print('ลองเพิ่ม $strjson');
+        }
+      } else {
+        print('No data found in scorelist');
+        loadedScoreStr = jsonEncode(scoreList);
+        insertScore(loadedScoreStr);
+        print('ลองเพิ่มสกอเปล่าให้ละ');
+      }
+    } else {
+      loadedScoreStr = jsonEncode(scoreList);
+      insertPool(loadedScoreStr);
+      print('ว่างแต่ลองเพิ่มScoreให้ละ');
+    }
+  }
+
+
   Future<void> _loadPool() async {
     print('เริ่มโหลด');
     if (donepooldatabase != null) {
-      List<Map<String, dynamic>> results =
-          await donepooldatabase!.query('donepool');
+      List<Map<String, dynamic>> results = await donepooldatabase!.query('donepool');
       print('ล่างนี้รีเซ้า');
       print(results);
       if (results.isNotEmpty) {
@@ -781,7 +880,6 @@ class _Simulation_ResultPageState extends State<Simulation_ResultPage> {
     printDatabaseData();
   }
 
-
   void _loaddatabase() async {
     if (nextsetdatabase != null) {
       List<Map<String, dynamic>> results =
@@ -796,12 +894,79 @@ class _Simulation_ResultPageState extends State<Simulation_ResultPage> {
 
   Future<void> _calculateScore() async {
     score = 0;
-
+    Map<String, List<int>> thisscoreList = {
+      'car_maintenance.db': [0,0],
+      'save_drive.db': [0,0],
+      'manners_and_conscience.db': [0,0],
+      'warning_sign.db': [0,0],
+      'mandatory_sign.db': [0,0],
+      'dangerous_situations.db': [0,0],
+      'law_land_traffic.db': [0,0],
+      'law_automobile.db': [0,0],
+      'law_commercial_and_criminal.db': [0,0],
+    };
     widget.questions.asMap().forEach((index, question) {
       if (widget.answers[index] == question['correct_answer']) {
         score++;
+        if (index >= 0 && index <= 7) {
+          thisscoreList['car_maintenance.db']![0] += 1;
+        }
+        if (index >= 8 && index <= 21) {
+          thisscoreList['save_drive.db']![0] += 1;
+        }
+        if (index >= 22 && index <= 28) {
+          thisscoreList['manners_and_conscience.db']![0] += 1;
+        }
+        if (index >= 29 && index <= 32) {
+          thisscoreList['warning_sign.db']![0] += 1;
+        }
+        if (index >= 33 && index <= 35) {
+          thisscoreList['mandatory_sign.db']![0] += 1;
+        }
+        if (index == 36) {
+          thisscoreList['dangerous_situations.db']![0] += 1;
+        }
+        if (index >= 37 && index <= 39) {
+          thisscoreList['law_land_traffic.db']![0] += 1;
+        }
+        if (index >= 40 && index <= 45) {
+          thisscoreList['law_automobile.db']![0] += 1;
+        }
+        if (index >= 46 && index <= 50) {
+          thisscoreList['law_commercial_and_criminal.db']![0] += 1;
+        }
+      }
+      if (index >= 0 && index <= 7) {
+        thisscoreList['car_maintenance.db']![1] += 1;
+      }
+      if (index >= 8 && index <= 21) {
+        thisscoreList['save_drive.db']![1] += 1;
+      }
+      if (index >= 22 && index <= 28) {
+        thisscoreList['manners_and_conscience.db']![1] += 1;
+      }
+      if (index >= 29 && index <= 32) {
+        thisscoreList['warning_sign.db']![1] += 1;
+      }
+      if (index >= 33 && index <= 35) {
+        thisscoreList['mandatory_sign.db']![1] += 1;
+      }
+      if (index == 36) {
+        thisscoreList['dangerous_situations.db']![1] += 1;
+      }
+      if (index >= 37 && index <= 39) {
+        thisscoreList['law_land_traffic.db']![1] += 1;
+      }
+      if (index >= 40 && index <= 45) {
+        thisscoreList['law_automobile.db']![1] += 1;
+      }
+      if (index >= 46 && index <= 50) {
+        thisscoreList['law_commercial_and_criminal.db']![1] += 1;
       }
     });
+
+    print('thisสกอลิสนะ :$thisscoreList');
+
   }
 
   void _showScoreDialog() {

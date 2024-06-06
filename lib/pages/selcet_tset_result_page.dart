@@ -97,7 +97,23 @@ class _Select_ResultPageState extends State<Select_ResultPage> {
           final correctAnswer = question['correct_answer'] ?? '';
           final userAnswer = widget.answers[index] ?? '';
           final questionId = question['id'] ?? 'N/A'; // Change 'question_id' to 'id'
+          String? imagePath;
 
+          // Check if 'image_number' is not null and set the image path
+          if (question['image_number'] != null) {
+            String imageNumber = question['image_number'];
+            String jpgPath = 'assets/testpic/$imageNumber.jpg';
+            String pngPath = 'assets/testpic/$imageNumber.png';
+
+            // Check if the JPG image exists
+            if (AssetImage(jpgPath).assetName.isNotEmpty) {
+              imagePath = jpgPath;
+            }
+            // Check if the PNG image exists
+            else if (AssetImage(pngPath).assetName.isNotEmpty) {
+              imagePath = pngPath;
+            }
+          }
           return Card(
             margin: EdgeInsets.symmetric(vertical: 8, horizontal: 16),
             color: Color(0xFFE4F3D8),
@@ -115,6 +131,8 @@ class _Select_ResultPageState extends State<Select_ResultPage> {
                     'Question ${index + 1}: ${question['question_text'] ?? ''}',
                     style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                   ),
+                  if (imagePath != null) // Display the image if it exists
+                    Image.asset(imagePath),
                   SizedBox(height: 8),
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,

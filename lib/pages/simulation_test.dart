@@ -169,6 +169,23 @@ class _QuestionTileState extends State<QuestionTile> {
   Widget build(BuildContext context) {
     var question = widget.question;
     var selectedAnswer = widget.selectedAnswer;
+    String? imagePath;
+
+    // Check if 'image_number' is not null and set the image path
+    if (question['image_number'] != null) {
+      String imageNumber = question['image_number'];
+      String jpgPath = 'assets/testpic/$imageNumber.jpg';
+      String pngPath = 'assets/testpic/$imageNumber.png';
+
+      // Check if the JPG image exists
+      if (AssetImage(jpgPath).assetName.isNotEmpty) {
+        imagePath = jpgPath;
+      }
+      // Check if the PNG image exists
+      else if (AssetImage(pngPath).assetName.isNotEmpty) {
+        imagePath = pngPath;
+      }
+    }
 
     return Card(
       margin: EdgeInsets.symmetric(vertical: 8, horizontal: 16),
@@ -182,6 +199,8 @@ class _QuestionTileState extends State<QuestionTile> {
               'Question ${widget.questionIndex}: ${question['question_text']}',
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
+            if (imagePath != null) // Display the image if it exists
+              Image.asset(imagePath),
             SizedBox(height: 8),
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
