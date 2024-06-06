@@ -772,32 +772,17 @@ class _Simulation_ResultPageState extends State<Simulation_ResultPage> {
     print('เริ่มโหลดScore');
     if (scoreListdatabase != null) {
       List<Map<String, dynamic>> results = await scoreListdatabase!.query('scorelist');
-      print('ล่างนี้รีเซ้าScore');
-      print(results);
-      if (results.isNotEmpty) {
+      if(results.isNotEmpty){
+        print('นี่คือสิ่งที่ได้จาก scorelist: $results');
         loadedScoreStr = results.first['scoredata'];
-        print('Loaded data from scorelist: $results');
-
-        if (loadedScoreStr.isNotEmpty) {
-          // Decode the JSON string to a Map
-          Map<String, dynamic> decodedData = jsonDecode(loadedScoreStr);
-          print('Decoded scoredata: $decodedData');
-        } else {
-          print('Scoredata is empty');
-          String strjson = jsonEncode(scoreList);
-          insertScore(jsonEncode(scoreList));
-          print('ลองเพิ่ม $strjson');
-        }
-      } else {
-        print('No data found in scorelist');
-        loadedScoreStr = jsonEncode(scoreList);
-        insertScore(loadedScoreStr);
-        print('ลองเพิ่มสกอเปล่าให้ละ');
+        print('โหลดสำเร็จ $loadedScoreStr');
+      }else{
+        print('scorelist น่าจะว่าง');
       }
-    } else {
-      loadedScoreStr = jsonEncode(scoreList);
-      insertPool(loadedScoreStr);
-      print('ว่างแต่ลองเพิ่มScoreให้ละ');
+    }else{
+      loadedScoreStr =jsonEncode(scoreList);
+      insertScore(loadedScoreStr);
+      print('scoreLisitdatabase empty');
     }
   }
 
@@ -966,7 +951,26 @@ class _Simulation_ResultPageState extends State<Simulation_ResultPage> {
     });
 
     print('thisสกอลิสนะ :$thisscoreList');
+    await _loadScore();
+    var decoded = jsonDecode(loadedScoreStr);
+    print('this is decoded $decoded');
+    print(decoded.runtimeType);
+    var predata1 = jsonEncode(thisscoreList);
+    var data1 = jsonDecode(predata1);
+    Map<String, dynamic> sumresult = {};
 
+    data1.forEach((key, value1) {
+      if (decoded.containsKey(key)) {
+        var value2 = decoded[key];
+        var sum = [value1[0] + value2[0], value1[1] + value2[1]];
+        sumresult[key] = sum;
+      }
+    });
+    print('this is sumresult $sumresult');
+    String sumresultStr = jsonEncode(sumresult);
+    _updateScore(sumresultStr);
+    await _loadScore();
+    print('สกอหลังอัพเดท $loadedScoreStr');
   }
 
   void _showScoreDialog() {

@@ -44,34 +44,38 @@ class _Test_CategoryState extends State<Test_Category> {
     return Scaffold(
       appBar: AppBar(
         title: Text('Quiz App'),
+        backgroundColor: Color(0xFF92CA68),
       ),
-      body: Column(
-        children: [
-          Expanded(
-            child: ListView.builder(
-              itemCount: questions.length,
-              itemBuilder: (context, index) {
-                final question = questions[index];
-                return QuestionTile(
-                  question: question,
-                  questionIndex: index + 1, // ปรับ index ให้เริ่มที่ 1
-                  onAnswerSelected: (String answer) {
-                    setState(() {
-                      answers[index] = answer;
-                    });
-                  },
-                );
-              },
+      body: Container(
+        color: Color(0xFFC8E6B2),
+        child: Column(
+          children: [
+            Expanded(
+              child: ListView.builder(
+                itemCount: questions.length,
+                itemBuilder: (context, index) {
+                  final question = questions[index];
+                  return QuestionTile(
+                    question: question,
+                    questionIndex: index + 1, // ปรับ index ให้เริ่มที่ 1
+                    onAnswerSelected: (String answer) {
+                      setState(() {
+                        answers[index] = answer;
+                      });
+                    },
+                  );
+                },
+              ),
             ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: ElevatedButton(
-              onPressed: _submitAnswers,
-              child: Text('Submit Answers'),
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: ElevatedButton(
+                onPressed: _submitAnswers,
+                child: Text('Submit Answers'),
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
