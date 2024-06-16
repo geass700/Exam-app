@@ -37,6 +37,11 @@ class _SimulationTestState extends State<SimulationTest> {
     super.initState();
     _openDatabase();
     _loadQuestions();
+    // _openDatabase().then((_) async {
+    //   await _loadQuestions();
+    //
+    //
+    // });
   }
 
   Future<void> _openDatabase() async {
@@ -51,7 +56,7 @@ class _SimulationTestState extends State<SimulationTest> {
   }
 
 
-  void _loadQuestions() async {
+  Future<void> _loadQuestions() async {
     if(nextquestion != null){
       print('nextquestion มีค่า');
       print('nextquestion details: $nextquestion');

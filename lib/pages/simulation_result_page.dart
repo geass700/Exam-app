@@ -969,8 +969,6 @@ class _Simulation_ResultPageState extends State<Simulation_ResultPage> {
     print('this is sumresult $sumresult');
     String sumresultStr = jsonEncode(sumresult);
     _updateScore(sumresultStr);
-    await _loadScore();
-    print('สกอหลังอัพเดท $loadedScoreStr');
   }
 
   void _showScoreDialog() {
@@ -1004,7 +1002,6 @@ class _Simulation_ResultPageState extends State<Simulation_ResultPage> {
             onPressed: handleClickHome,
             icon: Icon(Icons.home),
           ),
-          IconButton(icon: Icon(Icons.print), onPressed: () {}),
         ],
       ),
       body: ListView.builder(
