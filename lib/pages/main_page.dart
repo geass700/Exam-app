@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:test2/pages/simulation_test.dart';
 import 'key_page.dart';
-import 'random_test_page.dart';
+import 'new_simulation_test_page.dart';
 import 'selectKey_pages.dart';
 import 'selectTest_pages.dart';
 import 'stat_pages.dart';
@@ -44,7 +44,7 @@ class _State extends State<MainPage> {
                     style: ButtonStyle(
                       backgroundColor: MaterialStateProperty.all<Color>(Color(0xFFDAFAFA)),
                     ),
-                    child: Text('ฝึกทำข้อสอบเสมือนจริง',style: TextStyle(fontSize: 20),),
+                    child: Text('ฝึกทำข้อสอบจริง',style: TextStyle(fontSize: 20),),
                   ),
                   SizedBox(height: 20),
                   ElevatedButton(
@@ -60,7 +60,7 @@ class _State extends State<MainPage> {
                     style: ButtonStyle(
                       backgroundColor: MaterialStateProperty.all<Color>(Color(0xFFDAFAFA)),
                     ),
-                    child: Text('คลังข้อสอบ',style: TextStyle(fontSize: 20),),
+                    child: Text('รวมข้อสอบ',style: TextStyle(fontSize: 20),),
                   ),
                   SizedBox(height: 20),
                   ElevatedButton(
@@ -83,7 +83,7 @@ class _State extends State<MainPage> {
     print('เจ้าได้เลือกแล้ว');
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => SimulationTest()),
+      MaterialPageRoute(builder: (context) => New_SimulationTest()),
     );
   }
 

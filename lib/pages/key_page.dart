@@ -166,18 +166,6 @@ class _HomePageState extends State<HomePage> {
                             ],
                           ),
                           SizedBox(height: 8),
-                          Text(
-                            'Correct Answer: ${question['correct_answer']}',
-                            style: TextStyle(
-                              fontStyle: FontStyle.italic,
-                            ),
-                          ),
-                          Text(
-                            'image: ${question['image_number']}',
-                            style: TextStyle(
-                              fontStyle: FontStyle.italic,
-                            ),
-                          ),
                         ],
                       ),
                     ),

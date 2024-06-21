@@ -66,39 +66,4 @@ class DatabaseHelper {
     return lastQuestions;
   }
 
-  Future<List<int>> getSimilarityQuestions(String dbName, int questionId) async {
-    Database db = await getDatabase(dbName);
-    List<Map<String, dynamic>> result = await db.query(
-      'questions',
-      where: 'id = ?',
-      whereArgs: [questionId],
-    );
-    if (result.isNotEmpty) {
-      return List<int>.from(result.first['similarity']);
-    }
-    return [];
-  }
-
-  Future<bool> wasQuestionAnsweredCorrectly(int questionId) async {
-    Database db = await getDatabase('results.db');
-    List<Map<String, dynamic>> result = await db.query(
-      'quiz_history',
-      where: 'question_id = ? AND score = 1',
-      whereArgs: [questionId],
-    );
-    return result.isNotEmpty;
-  }
-
-  Future<void> insertQuizHistory(int categoryId, int questionId, String selectedOption, int score) async {
-    Database db = await getDatabase('results.db');
-    await db.insert(
-      'quiz_history',
-      {
-        'category_id': categoryId,
-        'question_id': questionId,
-        'selected_option': selectedOption,
-        'score': score,
-      },
-    );
-  }
 }

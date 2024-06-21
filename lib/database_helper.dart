@@ -31,57 +31,16 @@ class DatabaseHelper {
     return db;
   }
 
-  Future<List<Map<String, dynamic>>> getQuestions(String dbName) async {
-    Database db = await getDatabase(dbName);
-    return await db.query('questions');
+  Future<List<Map<String, dynamic>>> getQuestions(String tableName) async {
+    Database db = await getDatabase('questionDatabase.db');
+    return await db.query(tableName);
   }
 
-  Future<List<Map<String, dynamic>>> getSpecificQuestions(String dbName, List<int> questionIds) async {
-    Database db = await getDatabase(dbName);
+  Future<List<Map<String, dynamic>>> getSpecificQuestions(String tableName, List<int> questionIds) async {
+    Database db = await getDatabase('questionDatabase.db');
     String ids = questionIds.join(',');
-    List<Map<String, dynamic>> result = await db.rawQuery('SELECT * FROM questions WHERE id IN ($ids)');
+    List<Map<String, dynamic>> result = await db.rawQuery('SELECT * FROM $tableName WHERE id IN ($ids)');
     return result;
-  }
-
-  Future<Map<int, int>> getLastQuestionsByCategory(List<int> categoryIds) async {
-    Database db = await getDatabase('results.db');
-    Map<int, int> lastQuestions = {};
-    for (var categoryId in categoryIds) {
-      List<Map<String, dynamic>> result = await db.query(
-        'quiz_history',
-        where: 'category_id = ?',
-        whereArgs: [categoryId],
-        orderBy: 'id DESC',
-        limit: 1,
-      );
-      if (result.isNotEmpty) {
-        lastQuestions[categoryId] = result.first['question_id'];
-      }
-    }
-    return lastQuestions;
-  }
-
-  Future<List<int>> getSimilarityQuestions(String dbName, int questionId) async {
-    Database db = await getDatabase(dbName);
-    List<Map<String, dynamic>> result = await db.query(
-      'questions',
-      where: 'id = ?',
-      whereArgs: [questionId],
-    );
-    if (result.isNotEmpty) {
-      return List<int>.from(result.first['similarity']);
-    }
-    return [];
-  }
-
-  Future<bool> wasQuestionAnsweredCorrectly(int questionId) async {
-    Database db = await getDatabase('results.db');
-    List<Map<String, dynamic>> result = await db.query(
-      'quiz_history',
-      where: 'question_id = ? AND score = 1',
-      whereArgs: [questionId],
-    );
-    return result.isNotEmpty;
   }
 
   Future<Database> _openDatabase(String dbName) async {
@@ -89,10 +48,11 @@ class DatabaseHelper {
     return openDatabase(join(dbPath, dbName));
   }
 
-  Future<List<Map<String, dynamic>>> getAllQuestions(String dbName) async {
-    final db = await _openDatabase(dbName);
-    return db.query('questions');
+  Future<List<Map<String, dynamic>>> getAllQuestions(String tableName) async {
+    final db = await getDatabase('questionDatabase.db');
+    return db.query(tableName);
   }
+
   Future<void> insertQuizHistory(int categoryId, int questionId, String selectedOption, int score) async {
     Database db = await getDatabase('results.db');
     await db.insert(
