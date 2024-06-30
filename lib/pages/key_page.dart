@@ -7,7 +7,6 @@ class KeyTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Quiz App',
       home: HomePage(),
     );
   }
@@ -61,7 +60,7 @@ class _HomePageState extends State<HomePage> {
     return Scaffold(
       appBar: AppBar(
         leading: BackButton(onPressed: handleClickBack),
-        title: Text('คลังข้อสอบ'),
+        title: Text('รวมข้อสอบ'),
         backgroundColor: Color(0xFF92CA68),
       ),
       body: Container(

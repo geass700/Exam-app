@@ -88,7 +88,12 @@ class _New_SimulationTestState extends State<New_SimulationTest> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('การทำข้อสอบเสมือนจริง'),
+        title: FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Text(
+            'การทำข้อสอบจริง',
+          ),
+        ),
         backgroundColor: Color(0xFF92CA68),
         actions: [
           IconButton(
@@ -124,7 +129,7 @@ class _New_SimulationTestState extends State<New_SimulationTest> {
               padding: const EdgeInsets.all(16.0),
               child: ElevatedButton(
                 onPressed: _submitAnswers,
-                child: Text('Submit Answers'),
+                child: Text('ส่งคำตอบ'),
               ),
             ),
           ],
@@ -183,7 +188,7 @@ class _QuestionTileState extends State<QuestionTile> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'ข้อที่ ${widget.questionIndex}: ${question['question_text']}',
+              'ข้อที่ (${widget.questionIndex}): ${question['question_text']}',
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
             if (imagePath != null) // Display the image if it exists

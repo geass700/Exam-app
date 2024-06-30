@@ -65,7 +65,12 @@ class _SelectTestCategoryPageState extends State<SelectTestCategoryPage> {
     return Scaffold(
       appBar: AppBar(
         leading: BackButton(onPressed: handleClickBack),
-        title: Text('เลือกหมวดหมู่ข้อสอบที่ต้องการ'),
+        title: FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Text(
+            'เลือกหมวดหมู่ข้อสอบที่ต้องการ',
+          ),
+        ),
         backgroundColor: Color(0xFF92CA68),
       ),
       body: Container(

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'database_helper.dart';
-
+import 'package:test2/pages/main_page.dart';
 void main() {
   runApp(MyApp());
 }
@@ -9,8 +9,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Quiz App',
-      home: HomePage(),
+      home: MainPage(),
     );
   }
 }

@@ -20,7 +20,6 @@ class _Select_ResultPageState extends State<Select_ResultPage> {
   void initState() {
     super.initState();
     _calculateScore();
-    _storeCorrectAnswers();
     WidgetsBinding.instance.addPostFrameCallback((_) => _showScoreDialog());
   }
 
@@ -29,33 +28,11 @@ class _Select_ResultPageState extends State<Select_ResultPage> {
     widget.questions.asMap().forEach((index, question) {
       if (widget.answers[index] == question['correct_answer']) {
         score++;
-        _storeCorrectAnswers();
+
       }
     });
   }
 
-  Future<void> _storeCorrectAnswers() async {
-    final prefs = await SharedPreferences.getInstance();
-
-    for (var question in widget.questions) {
-      final int questionId = question['id'];
-      final String dbName = question['database_name'];
-      final String correctAnswer = question['correct_answer'];
-
-      if (questionId != null && dbName != null && correctAnswer != null) {
-        if (widget.answers.containsKey(questionId) &&
-            widget.answers[questionId] == correctAnswer) {
-          String key = 'correct_answers_$dbName';
-          List<String> correctAnswers = prefs.getStringList(key) ?? [];
-          if (!correctAnswers.contains(questionId.toString())) {
-            correctAnswers.add(questionId.toString());
-            await prefs.setStringList(key, correctAnswers);
-            print('Stored correct answer for $dbName: $questionId');
-          }
-        }
-      }
-    }
-  }
 
   void _showScoreDialog() {
     showDialog(
@@ -81,7 +58,13 @@ class _Select_ResultPageState extends State<Select_ResultPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('ผลการทำข้อสอบ'),
+        automaticallyImplyLeading: false,
+        title: FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Text(
+            'ผลการทำข้อสอบ',
+          ),
+        ),
         backgroundColor: Color(0xFF92CA68),
         actions: [
           IconButton(
@@ -123,12 +106,7 @@ class _Select_ResultPageState extends State<Select_ResultPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Question ID: $questionId',
-                    style: TextStyle(fontSize: 14, fontStyle: FontStyle.italic),
-                  ),
-                  SizedBox(height: 4),
-                  Text(
-                    'Question ${index + 1}: ${question['question_text'] ?? ''}',
+                    'ข้อที่ ${index + 1}: ${question['question_text'] ?? ''}',
                     style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                   ),
                   if (imagePath != null) // Display the image if it exists

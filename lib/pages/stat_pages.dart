@@ -5,6 +5,7 @@ import 'main_page.dart';
 import 'catagory.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart' as path;
+import 'userdatahandle.dart';
 
 class StatPage extends StatefulWidget {
   const StatPage({super.key});
@@ -14,97 +15,92 @@ class StatPage extends StatefulWidget {
 }
 
 class _StatPageState extends State<StatPage> {
-  Database? scoredatabase;
-  Map<String, List<int>> loadedScore = {};
+  final UserdataHandle UserHelper = UserdataHandle.instance;
 
   @override
   void initState() {
     super.initState();
-    _initializeDatabase();
+    _loadScore();
   }
 
-  Future<void> _initializeDatabase() async {
-    await _openDatabase();
-    await _loadScore();
-  }
-
-  Future<void> _openDatabase() async {
-    final dbPath = await getDatabasesPath();
-    final dbPathWithName = path.join(dbPath, 'scoreList.db');
-    scoredatabase = await openDatabase(
-      dbPathWithName,
-      version: 1,
-    );
-  }
+  Map<String, List<int>> score = {
+    'car_maintenance': [0, 0],
+    'save_drive': [0, 0],
+    'manners_and_conscience': [0, 0],
+    'warning_sign': [0, 0],
+    'mandatory_sign': [0, 0],
+    'dangerous_situations': [0, 0],
+    'law_land_traffic': [0, 0],
+    'law_automobile': [0, 0],
+    'law_commercial_and_criminal': [0, 0],
+  };
 
   Future<void> _loadScore() async {
-    if (scoredatabase != null) {
-      final List<Map<String, dynamic>> result = await scoredatabase!.query('scorelist');
-      Map<String, dynamic> data = json.decode(result.first['scoredata']);
+    Map<String, List<int>> scoreTableData = await UserHelper.getScoreTableData();
+    if (scoreTableData.isNotEmpty) {
       setState(() {
-        loadedScore = data.map((key, value) => MapEntry(key, List<int>.from(value)));
+        score = scoreTableData;
       });
     }
   }
 
-  // Map ที่เก็บจำนวนข้อสอบทั้งหมดสำหรับแต่ละหมวด
   final Map<String, int> totalQuestionsMap = {
-    'car_maintenance.db': 126,
-    'save_drive.db': 212,
-    'manners_and_conscience.db': 108,
-    'warning_sign.db': 58,
-    'mandatory_sign.db': 38,
-    'dangerous_situations.db': 21,
-    'law_land_traffic.db': 52,
-    'law_automobile.db': 88,
-    'law_commercial_and_criminal.db': 63,
+    'car_maintenance': 126,
+    'save_drive': 212,
+    'manners_and_conscience': 108,
+    'warning_sign': 58,
+    'mandatory_sign': 38,
+    'dangerous_situations': 21,
+    'law_land_traffic': 52,
+    'law_automobile': 88,
+    'law_commercial_and_criminal': 63,
   };
 
   List<Category> cats = [
     Category(
       Name: 'การบำรุงรักษารถ',
       Id: 1,
-      data: 'car_maintenance.db',
+      data: 'car_maintenance',
     ),
     Category(
       Name: 'เทคนิคการขับขี่อย่างปลอดภัย',
       Id: 2,
-      data: 'save_drive.db',
+      data: 'save_drive',
     ),
     Category(
       Name: 'มารยาทและจิตสำนึก',
       Id: 3,
-      data: 'manners_and_conscience.db',
+      data: 'manners_and_conscience',
     ),
     Category(
       Name: 'ป้ายเตือน',
       Id: 4,
-      data: 'warning_sign.db',
+      data: 'warning_sign',
     ),
     Category(
       Name: 'ป้ายบังคับ',
       Id: 5,
-      data: 'mandatory_sign.db',
+      data: 'mandatory_sign',
     ),
     Category(
       Name: 'การรับรู้สถานการณ์อันตราย',
       Id: 6,
-      data: 'dangerous_situations.db',
+      data: 'dangerous_situations',
     ),
     Category(
       Name: 'กฎหมายว่าด้วยการจราจรทางบก',
       Id: 7,
-      data: 'law_land_traffic.db',
+      data: 'law_land_traffic',
     ),
     Category(
       Name: 'กฎหมายว่าด้วยรถยนต์',
       Id: 8,
-      data: 'law_automobile.db',
+      data: 'law_automobile',
     ),
     Category(
       Name: 'หมวดกฎหมายแพ่งพาณิชย์และกฎหมายอาญา',
       Id: 9,
-      data: 'law_commercial_and_criminal.db',
+      data: 'law_commercial_and_criminal',
     ),
   ];
 
@@ -120,7 +116,7 @@ class _StatPageState extends State<StatPage> {
         itemCount: cats.length,
         itemBuilder: (context, int index) {
           var cat = cats[index];
-          var scores = loadedScore[cat.data] ?? [0, 0];
+          var scores = score[cat.data] ?? [0, 0];
           var totalQuestions = scores[1];
           var correctAnswers = scores[0];
           var percentage = totalQuestions > 0

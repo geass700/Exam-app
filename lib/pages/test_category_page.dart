@@ -43,7 +43,12 @@ class _Test_CategoryState extends State<Test_Category> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('การทำข้อสอบเฉพาะหมวด'),
+        title: FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Text(
+            'การทำข้อสอบเฉพาะหมวด',
+          ),
+        ),
         backgroundColor: Color(0xFF92CA68),
       ),
       body: Container(
@@ -71,7 +76,7 @@ class _Test_CategoryState extends State<Test_Category> {
               padding: const EdgeInsets.all(16.0),
               child: ElevatedButton(
                 onPressed: _submitAnswers,
-                child: Text('Submit Answers'),
+                child: Text('ส่งคำตอบ'),
               ),
             ),
           ],
@@ -121,6 +126,7 @@ class _QuestionTileState extends State<QuestionTile> {
     }
     return Card(
       margin: EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+      color: Color(0xFFE4F3D8),
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(

@@ -30,6 +30,10 @@ class UserdataHandle {
     await db.execute(
       "CREATE TABLE nextsetTable(id INTEGER NOT NULL PRIMARY KEY, question_id INTEGER NOT NULL, category TEXT NOT NULL)",
     );
+    await db.execute(
+      "CREATE TABLE scoreTable(id INTEGER NOT NULL PRIMARY KEY, correct INTEGER NOT NULL,  total INTEGER NOT NULL, category TEXT NOT NULL)",
+    );
+
   }
 
   Future<void> insertDoneTable(int q_id, String category) async {
@@ -46,6 +50,15 @@ class UserdataHandle {
     await db.insert(
       'nextsetTable',
       {'id': id, 'question_id': q_id, 'category': category},
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }
+
+  Future<void> insertScoreTable(int id,int correct,int total, String category) async {
+    Database db = await database;
+    await db.insert(
+      'scoreTable',
+      {'id': id, 'correct': correct, 'total': total, 'category': category},
       conflictAlgorithm: ConflictAlgorithm.replace,
     );
   }
@@ -88,6 +101,24 @@ class UserdataHandle {
         result[category] = [];
       }
       result[category]!.add(questionId);
+    }
+    return result;
+  }
+
+  Future<Map<String, List<int>>> getScoreTableData() async {
+    Database db = await database;
+    final List<Map<String, dynamic>> maps = await db.query('scoreTable');
+
+    Map<String, List<int>> result = {};
+    for (var map in maps) {
+      String category = map['category'];
+      int correct = map['correct'];
+      int total = map['total'];
+      if (!result.containsKey(category)) {
+        result[category] = [];
+      }
+      result[category]!.add(correct);
+      result[category]!.add(total);
     }
     return result;
   }

@@ -10,7 +10,6 @@ import 'userdatahandle.dart';
 class New_Simulation_ResultPage extends StatefulWidget {
   final Map<int, String> answers;
   final List<Map<String, dynamic>> questions;
-
   New_Simulation_ResultPage({required this.answers, required this.questions});
 
   @override
@@ -20,7 +19,7 @@ class New_Simulation_ResultPage extends StatefulWidget {
 class _New_Simulation_ResultPageState extends State<New_Simulation_ResultPage> {
   int score = 0;
   final UserdataHandle dbHelper = UserdataHandle.instance;
-
+  Map<String, List<int>> ?scoreTableData;
   @override
   void initState() {
     super.initState();
@@ -29,94 +28,130 @@ class _New_Simulation_ResultPageState extends State<New_Simulation_ResultPage> {
 
   }
 
-
   Future<void> _calculateScore() async {
     score = 0;
-    Map<String, List<int>> thisscoreList = {
-      'car_maintenance.db': [0,0],
-      'save_drive.db': [0,0],
-      'manners_and_conscience.db': [0,0],
-      'warning_sign.db': [0,0],
-      'mandatory_sign.db': [0,0],
-      'dangerous_situations.db': [0,0],
-      'law_land_traffic.db': [0,0],
-      'law_automobile.db': [0,0],
-      'law_commercial_and_criminal.db': [0,0],
+    Map<String, List<int>> thisScoreList = {
+      'car_maintenance': [0, 0],
+      'save_drive': [0, 0],
+      'manners_and_conscience': [0, 0],
+      'warning_sign': [0, 0],
+      'mandatory_sign': [0, 0],
+      'dangerous_situations': [0, 0],
+      'law_land_traffic': [0, 0],
+      'law_automobile': [0, 0],
+      'law_commercial_and_criminal': [0, 0],
     };
-    widget.questions.asMap().forEach((index, question) async{
+
+    // รอบแรก: คำนวณคะแนน
+    for (int index = 0; index < widget.questions.length; index++) {
+      var question = widget.questions[index];
       if (widget.answers[index] == question['correct_answer']) {
         score++;
         if (index >= 0 && index <= 7) {
-          thisscoreList['car_maintenance.db']![0] += 1;
-          await dbHelper.insertDoneTable(question['id'],'car_maintenance');
-        }
-        else if (index >= 8 && index <= 21) {
-          thisscoreList['save_drive.db']![0] += 1;
-          await dbHelper.insertDoneTable(question['id'],'save_drive');
-        }
-        else if (index >= 22 && index <= 28) {
-          thisscoreList['manners_and_conscience.db']![0] += 1;
-          await dbHelper.insertDoneTable(question['id'],'manners_and_conscience');
-        }
-        else if (index >= 29 && index <= 32) {
-          thisscoreList['warning_sign.db']![0] += 1;
-          await dbHelper.insertDoneTable(question['id'],'warning_sign');
-        }
-        else if (index >= 33 && index <= 35) {
-          thisscoreList['mandatory_sign.db']![0] += 1;
-          await dbHelper.insertDoneTable(question['id'],'mandatory_sign');
-        }
-        else if (index == 36) {
-          thisscoreList['dangerous_situations.db']![0] += 1;
-          await dbHelper.insertDoneTable(question['id'],'dangerous_situations');
-        }
-        else if (index >= 37 && index <= 39) {
-          thisscoreList['law_land_traffic.db']![0] += 1;
-          await dbHelper.insertDoneTable(question['id'],'law_land_traffic');
-        }
-        else if (index >= 40 && index <= 45) {
-          thisscoreList['law_automobile.db']![0] += 1;
-          await dbHelper.insertDoneTable(question['id'],'law_automobile');
-        }
-        else if (index >= 46 && index <= 50) {
-          thisscoreList['law_commercial_and_criminal.db']![0] += 1;
-          await dbHelper.insertDoneTable(question['id'],'law_commercial_and_criminal');
-        }
-      } else{
-        if (index >= 0 && index <= 7) {
-          thisscoreList['car_maintenance.db']![1] += 1;
-        }
-        else if (index >= 8 && index <= 21) {
-          thisscoreList['save_drive.db']![1] += 1;
-        }
-        else if (index >= 22 && index <= 28) {
-          thisscoreList['manners_and_conscience.db']![1] += 1;
-        }
-        else if (index >= 29 && index <= 32) {
-          thisscoreList['warning_sign.db']![1] += 1;
-        }
-        else if (index >= 33 && index <= 35) {
-          thisscoreList['mandatory_sign.db']![1] += 1;
-        }
-        else if (index == 36) {
-          thisscoreList['dangerous_situations.db']![1] += 1;
-        }
-        else if (index >= 37 && index <= 39) {
-          thisscoreList['law_land_traffic.db']![1] += 1;
-        }
-        else if (index >= 40 && index <= 45) {
-          thisscoreList['law_automobile.db']![1] += 1;
-        }
-        else if (index >= 46 && index <= 50) {
-          thisscoreList['law_commercial_and_criminal.db']![1] += 1;
+          thisScoreList['car_maintenance']![0] += 1;
+        } else if (index >= 8 && index <= 21) {
+          thisScoreList['save_drive']![0] += 1;
+        } else if (index >= 22 && index <= 28) {
+          thisScoreList['manners_and_conscience']![0] += 1;
+        } else if (index >= 29 && index <= 32) {
+          thisScoreList['warning_sign']![0] += 1;
+        } else if (index >= 33 && index <= 35) {
+          thisScoreList['mandatory_sign']![0] += 1;
+        } else if (index == 36) {
+          thisScoreList['dangerous_situations']![0] += 1;
+        } else if (index >= 37 && index <= 39) {
+          thisScoreList['law_land_traffic']![0] += 1;
+        } else if (index >= 40 && index <= 45) {
+          thisScoreList['law_automobile']![0] += 1;
+        } else if (index >= 46 && index <= 50) {
+          thisScoreList['law_commercial_and_criminal']![0] += 1;
         }
       }
 
-    });
+      if (index >= 0 && index <= 7) {
+        thisScoreList['car_maintenance']![1] += 1;
+      } else if (index >= 8 && index <= 21) {
+        thisScoreList['save_drive']![1] += 1;
+      } else if (index >= 22 && index <= 28) {
+        thisScoreList['manners_and_conscience']![1] += 1;
+      } else if (index >= 29 && index <= 32) {
+        thisScoreList['warning_sign']![1] += 1;
+      } else if (index >= 33 && index <= 35) {
+        thisScoreList['mandatory_sign']![1] += 1;
+      } else if (index == 36) {
+        thisScoreList['dangerous_situations']![1] += 1;
+      } else if (index >= 37 && index <= 39) {
+        thisScoreList['law_land_traffic']![1] += 1;
+      } else if (index >= 40 && index <= 45) {
+        thisScoreList['law_automobile']![1] += 1;
+      } else if (index >= 46 && index <= 50) {
+        thisScoreList['law_commercial_and_criminal']![1] += 1;
+      }
+    }
+
+    // รอบที่สอง: Insert ข้อมูลลงในฐานข้อมูล
+    for (int index = 0; index < widget.questions.length; index++) {
+      var question = widget.questions[index];
+      if (widget.answers[index] == question['correct_answer']) {
+        if (index >= 0 && index <= 7) {
+          await dbHelper.insertDoneTable(question['id'], 'car_maintenance');
+        } else if (index >= 8 && index <= 21) {
+          await dbHelper.insertDoneTable(question['id'], 'save_drive');
+        } else if (index >= 22 && index <= 28) {
+          await dbHelper.insertDoneTable(question['id'], 'manners_and_conscience');
+        } else if (index >= 29 && index <= 32) {
+          await dbHelper.insertDoneTable(question['id'], 'warning_sign');
+        } else if (index >= 33 && index <= 35) {
+          await dbHelper.insertDoneTable(question['id'], 'mandatory_sign');
+        } else if (index == 36) {
+          await dbHelper.insertDoneTable(question['id'], 'dangerous_situations');
+          print('danger inserted');
+        } else if (index >= 37 && index <= 39) {
+          await dbHelper.insertDoneTable(question['id'], 'law_land_traffic');
+        } else if (index >= 40 && index <= 45) {
+          await dbHelper.insertDoneTable(question['id'], 'law_automobile');
+        } else if (index >= 46 && index <= 50) {
+          await dbHelper.insertDoneTable(question['id'], 'law_commercial_and_criminal');
+        }
+      }
+    }
+    
+    print(thisScoreList); // แสดงผลลัพธ์สำหรับตรวจสอบ
+    Map<String, List<int>> scoreTableData = await dbHelper.getScoreTableData();
+    if(scoreTableData.isNotEmpty){
+      Map<String, List<int>> resultMap = {};
+
+      for (var key in thisScoreList.keys) {
+        resultMap[key] = [
+          thisScoreList[key]![0] + scoreTableData[key]![0],
+          thisScoreList[key]![1] + scoreTableData[key]![1]
+        ];
+      }
+      print('resultMap: $resultMap');
+      int id = 1;
+      for (var entry in resultMap.entries) {
+        String category = entry.key;
+        int correct = entry.value[0];
+        int total = entry.value[1];
+        await dbHelper.insertScoreTable(id, correct, total, category);
+        id++;
+      }
+    }else{
+      int id = 1;
+      for (var entry in thisScoreList.entries) {
+        String category = entry.key;
+        int correct = entry.value[0];
+        int total = entry.value[1];
+        await dbHelper.insertScoreTable(id, correct, total, category);
+        id++;
+      }
+    }
 
   }
 
-  Future<void> _calculateNextSet() async{
+
+
+  Future<void> _calculateNextSet() async {
     Map<String, List<int>> doneTableData = await dbHelper.getDoneTableData();
     Map<String, List<int>> nextquestionset = {
       'car_maintenance': [],
@@ -129,10 +164,21 @@ class _New_Simulation_ResultPageState extends State<New_Simulation_ResultPage> {
       'law_automobile': [],
       'law_commercial_and_criminal': [],
     };
-    if(doneTableData.isEmpty){
+    if (doneTableData.isEmpty) {
+      doneTableData = nextquestionset;
+      print('donetabledata is empty');
+    }else{
+      doneTableData.forEach((key, value) {
+        if (nextquestionset.containsKey(key)) {
+          nextquestionset[key] = List<int>.from(value);
+        }
+      });
       doneTableData = nextquestionset;
     }
-    widget.questions.asMap().forEach((index, question) async{
+
+    print('this is donetabledata$doneTableData');
+    for (int index = 0; index < widget.questions.length; index++) {
+      var question = widget.questions[index];
       if (widget.answers[index] == question['correct_answer']) {
         if (index >= 0 && index <= 7) {
           List<int> similarityList = json.decode(question['similarity']).cast<int>();
@@ -323,7 +369,7 @@ class _New_Simulation_ResultPageState extends State<New_Simulation_ResultPage> {
           }
           await dbHelper.insertNextSetTable(index+1,select, 'law_commercial_and_criminal');
         }
-      } else{
+      } else {
         if (index >= 0 && index <= 7) {
           List<int> similarityList = json.decode(question['similarity']).cast<int>();
           int select = -1;
@@ -532,8 +578,22 @@ class _New_Simulation_ResultPageState extends State<New_Simulation_ResultPage> {
           await dbHelper.insertNextSetTable(index+1,select, 'law_commercial_and_criminal');
         }
       }
-    });
+    }
   }
+
+
+  String _getCategory(int index) {
+    if (index >= 0 && index <= 7) return 'car_maintenance';
+    if (index >= 8 && index <= 21) return 'save_drive';
+    if (index >= 22 && index <= 28) return 'manners_and_conscience';
+    if (index >= 29 && index <= 32) return 'warning_sign';
+    if (index >= 33 && index <= 35) return 'mandatory_sign';
+    if (index == 36) return 'dangerous_situations';
+    if (index >= 37 && index <= 39) return 'law_land_traffic';
+    if (index >= 40 && index <= 45) return 'law_automobile';
+    return 'law_commercial_and_criminal';
+  }
+
 
   void _showScoreDialog() {
     showDialog(
@@ -559,7 +619,13 @@ class _New_Simulation_ResultPageState extends State<New_Simulation_ResultPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('ผลการทำข้อสอบ'),
+        automaticallyImplyLeading: false,
+        title: FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Text(
+            'ผลการทำข้อสอบ',
+          ),
+        ),
         backgroundColor: Color(0xFF92CA68),
         actions: [
           IconButton(
@@ -586,12 +652,7 @@ class _New_Simulation_ResultPageState extends State<New_Simulation_ResultPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Question ID: $questionId',
-                    style: TextStyle(fontSize: 14, fontStyle: FontStyle.italic),
-                  ),
-                  SizedBox(height: 4),
-                  Text(
-                    'Question ${index + 1}: ${question['question_text'] ?? ''}',
+                    'ข้อที่ ${index + 1}: ${question['question_text'] ?? ''}',
                     style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                   ),
                   SizedBox(height: 8),
