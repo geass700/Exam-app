@@ -188,7 +188,7 @@ class _QuestionTileState extends State<QuestionTile> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'ข้อที่ (${widget.questionIndex}): ${question['question_text']}',
+              'ข้อที่ ${widget.questionIndex}: ${question['question_text']} [${question['id']}]',
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
             if (imagePath != null) // Display the image if it exists
